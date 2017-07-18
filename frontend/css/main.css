@@ -1,0 +1,123 @@
+/* Written with this:
+http://jaydenseric.com/blog/forget-normalize-or-resets-lay-your-own-css-foundation
+*/
+html {
+	-ms-text-size-adjust: 100%;
+	-moz-text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
+	box-sizing: border-box;
+}
+
+*, *:before, *:after {
+	box-sizing: inherit;
+}
+
+body {
+	margin: 0;
+	line-height: 1;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-font-smoothing: antialiased;
+	/* test with subpixel-antialised */
+}
+
+p, h1, h2, h3, h4, h5, h6, blockquote, ol, ul, figure {
+	margin: 0;
+	padding: 0;
+}
+
+main, li {
+	display: block;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-size: inherit;
+}
+
+strong {
+	font-weight: bold;
+}
+
+a, button {
+	transition: .3s;
+}
+
+a {
+	text-decoration: none;
+}
+
+button {
+	overflow: visible;
+	border: 0;
+	-webkit-font-smoothing: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	background: none;
+	cursor: pointer;
+}
+
+::-moz-focus-inner {
+	padding: 0;
+	border: 0;
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+	border: 0;
+}
+
+html, body {
+	height: 100%;
+	position: relative;
+}
+
+html {
+	font-size: 62.5%;
+}
+
+body {
+	font-family: Helvetica, Arial, sans-serif;
+	line-height: 1.42;
+	font-size: 1.6em;
+}
+
+#sheet {
+	max-width: 90rem;
+	margin: 0 auto;
+}
+
+.card {
+	display: flex;
+	border: 1px solid black;
+	min-height: 2em;
+}
+
+.cue {
+	width: 30%;
+	flex: 0 0 auto;
+	border-right: 1px solid black;
+	min-height: 2em;
+}
+
+.notes {
+	width: 70%;
+	flex: 0 0 auto;
+}
+
+/* TODO: Set a proper width*/
+/* Find a way to select the first element inside this. Give it a border.
+.note-card {
+	border-right: 1px solid grey;
+}
+*/
+/*  Can't really decide how to style this. Perhaps let the user decide?
+	Let them pick a theme initially, then allow them to change it.
+	Classes allowed to be changed:
+	.note, .cue
+	attributes able to be changed:
+	background-color, color, font-family, font-size, border,
+	line-height (or margin after <p>), order of note and cue, whether or not
+	the lines connect (margin, i guess. Could be dangerous. Include a reset
+	style button.)
+	Mechanism to do this should be fairly straightforward.
+*/
