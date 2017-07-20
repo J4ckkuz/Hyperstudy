@@ -30,16 +30,12 @@ body {
 	flex: 0 0 auto;
 	border-right: 1px solid black;
 	min-height: 2em;
-	background-color: #ffeeee;
 }
 .notes {
 	width: 70%;
 	flex: 0 0 auto;
-	background-color: #eeeeff;
 }
-.ql-container {
-	height: auto;
-}
+
 /* TODO: Set a proper width*/
 
 /* Find a way to select the first element inside this. Give it a border.

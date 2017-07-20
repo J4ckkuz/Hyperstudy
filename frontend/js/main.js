@@ -1,3 +1,8 @@
+/*
+I feel like I might be going about this the wrong way. This code combines the DOM
+elements and JS objects. What might be better is having a model to represent the
+information, then doing something to render it onto the page.
+*/
 var hyperstudy = (function () {
     "use strict";
 
@@ -18,8 +23,6 @@ var hyperstudy = (function () {
     // Similar to what will be sent to the database. It only contains data,
     // no references to objects. The DOM should follow this, not the other way round.
     // However, we still need a way to access DOM objects for Quill purposes and such.
-    // I decided to put object references in here for ease of use.
-    // It can be converted back to the logical model before sending to database.
 
     // Simulated JSON from server
     var exampleSheet = {
@@ -35,9 +38,7 @@ var hyperstudy = (function () {
                     "ATP powers metabolic activities",
                     "Enable cells to produce 15x more ATP"
                 ],
-                // A reference to the DOM object.
-                // This should be added by the client when cards are added, but not
-                // included in the JSON or stored in the database.
+                // A reference to the DOM object. This should be added by the client when cards are added, not included in the JSON or stored in the database.
                 element: document.getElementsByClassName("card")[0]
             },{
                 cue: "What is a cell membrane?",
@@ -57,60 +58,35 @@ var hyperstudy = (function () {
         Utility functions
     */
 
-    // Saves a couple of lines. worth it imo
-    var createAndClass = function(CSSClass) {
+    // I'm not sure if this is just a waste of space tbh. Saves a couple of lines. worth it imo
+    var createAndClass = function(type) {
         var element = document.createElement("div");
-        element.classList.add(CSSClass);
+        element.classList.add(type);
         return element;
     };
+    // Might make this into a constructor or delete it.
 
-    // Some of this should probably be split into functions, although they aren't used more than once.
     var Card = function(sheet) {
-        sheet.cards.push(this);
-        // Create a card DOM object.
+        // Create a card DOM object
         var card = createAndClass("card");
         var cue = createAndClass("cue");
         var notes = createAndClass("notes");
-        // Add the card to the DOM
-        card.appendChild(cue);
-        card.appendChild(notes);
-        root.appendChild(card);
         // create Quill editors for cue and notes
         var cueEditor = new Quill(cue);
         var notesEditor = new Quill(notes);
+        // Add references to the Card object for access to editors.
+        this.cue = cueEditor;
+        this.notes = notesEditor;
+        sheet.cards.push(this);
 
-        this.cue = {
-            content: null,
-            editor: cueEditor, // Don't think I need this
-            element: cue // Don't think I need this either
-        };
-        this.notes = {
-            content: null,
-            editor: notesEditor,
-            element: notes
-        };
-        // Add event handlers -- these update the model
-        // At this stage, formatting is NOT saved or supported.
-        // I don't know a good way to do this yet, but eventually it'll be there.
-        var thisCard = this;
-        // Add references for easy access to editors.
-        // this.cue.cueEditor = cueEditor;
-
-        cueEditor.on("text-change", function() {
-            // This will take text from mutiple lines, which is ok as there is no need to separate them or use only one line.
-            thisCard.cue.content = cueEditor.getText();
-        });
-        notesEditor.on("text-change", function() {
-            // notes.content takes an array, as ecah line should be treated separately.
-            thisCard.notes.content = (notesEditor.getText()).split(/\r?\n/);
-            thisCard.notes.content.splice(-1, 1);
-        });
-
+        card.appendChild(cue);
+        card.appendChild(notes);
+        root.appendChild(card);
+    };
+    Card.prototype.update = function() {
+        // Call this when the text in the editor is changed.
 
     };
-    // When an editor is changed, update the Card.cue or Card.notes properties.
-    // str.split("\n");
-    // Separate getText() by newline
 
     // TODO Test. Will be called when JSON model of Sheet arrives from server
     var loadSheet = function(JSONString) {
@@ -136,19 +112,17 @@ var hyperstudy = (function () {
     document.getElementById("accessTester").addEventListener("click", function () {
         console.log(testSheet);
     });
-    document.getElementById("test1").addEventListener("click", function () {
-        console.log(testSheet.cards[0].cue);
+    document.getElementById("JSONTest").addEventListener("click", function () {
+
+
     });
-    document.getElementById("test2").addEventListener("click", function () {
-        console.log(testSheet.cards[0].cueEditor.getContents());
-        console.log(testSheet.cards[0].cueEditor.getText());
-    });
+
 
 
 
     return {
         // function funcName() {
-
+        "addCard": addCard
         // };
     };
 
