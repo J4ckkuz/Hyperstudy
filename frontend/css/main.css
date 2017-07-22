@@ -104,12 +104,10 @@ body {
 	flex: 0 0 auto;
 }
 
-/* TODO: Set a proper width*/
-/* Find a way to select the first element inside this. Give it a border.
-.note-card {
-	border-right: 1px solid grey;
+.ql-container {
+	height: auto;
 }
-*/
+
 /*  Can't really decide how to style this. Perhaps let the user decide?
 	Let them pick a theme initially, then allow them to change it.
 	Classes allowed to be changed:

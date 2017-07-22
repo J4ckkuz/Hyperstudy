@@ -36,13 +36,9 @@ body {
 	flex: 0 0 auto;
 }
 
-/* TODO: Set a proper width*/
-
-/* Find a way to select the first element inside this. Give it a border.
-.note-card {
-	border-right: 1px solid grey;
+.ql-container {
+	height: auto; // Not required when using flexbox
 }
-*/
 
 
 /*  Can't really decide how to style this. Perhaps let the user decide?
