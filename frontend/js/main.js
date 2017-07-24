@@ -1,3 +1,7 @@
+/*  TODO
+    Decrease amount of repeated anonymous functions/IIFEs
+*/
+
 var hyperstudy = (function () {
     "use strict";
 
@@ -9,6 +13,163 @@ var hyperstudy = (function () {
 
     var testSheet = {
         cards: []
+    };
+    var cardsList = testSheet.cards;
+
+    var getNodeIndex = function(node) {
+        for (var i = 0; i < cardsList.length; i++) {
+            if (cardsList[i].node === node) {
+                return i;
+            }
+        }
+    };
+    var getParentCard = function(that) {
+        var i = getNodeIndex(that.quill.container.parentNode);
+        return cardsList[i];
+    };
+    var identifyEditor = function(that) {
+        // Must be passed with "this" as an argument.
+        if (that.quill.container.classList.contains("cue")) {
+            return "cueEditor";
+        }
+        else if (that.quill.container.classList.contains("notes")) {
+            return "notesEditor";
+        }
+    };
+    var Card = function(sheet, cueDelta, notesDelta) {
+        sheet.cards.push(this);
+        var thisCard = this;
+
+        // Create a card DOM object
+        var node = createCardNode();
+        this.node = node.card;
+        root.appendChild(this.node);
+
+        // create Quill editors for cue and notes
+        var cueEditor = new Quill(node.cue, baseOptions);
+        var notesEditor = new Quill(node.notes, baseOptions);
+
+        // Add references to editors.
+        this.cueEditor = cueEditor;
+        this.notesEditor = notesEditor;
+
+        // Are these necessary? Might be for auto-save
+        cueEditor.on("text-change", function() {
+            thisCard.cue = cueEditor.getContents();
+        });
+        notesEditor.on("text-change", function() {
+            thisCard.notes = notesEditor.getContents();
+        });
+
+        // Set editor contents
+        if (paramExists(cueDelta)) {
+            cueEditor.setContents(cueDelta);
+        }
+        if (paramExists(notesDelta)) {
+            notesEditor.setContents(notesDelta);
+        }
+    };
+    var deleteCard = function(card) {
+        var index = cardsList.indexOf(card);
+        if (index > -1) {
+            cardsList.splice(index, 1);
+        }
+        root.removeChild(card.node);
+    };
+    // TODO: make this focus on the bottom line of the editor above it.
+    var upArrowHandler = function(range, context) {
+        if (range.index === 0) {
+            var nodeIndex = getNodeIndex(this.quill.container.parentNode);
+
+            if (nodeIndex > 0) {
+                var editor = identifyEditor(this);
+                cardsList[nodeIndex - 1][editor].focus();
+            }
+        }
+        return true;
+    };
+    // TODO: same as above
+    var downArrowHandler = function(range, context) {
+        var thisEditor = this.quill;
+        if (thisEditor.getSelection().index === thisEditor.getText().length - 1) {
+            var nodeIndex = getNodeIndex(this.quill.container.parentNode);
+
+            if (nodeIndex < cardsList.length - 1) {
+                var editor = identifyEditor(this);
+                cardsList[nodeIndex + 1][editor].focus();
+            }
+        }
+        return true;
+    };
+    // TODO: make this insert after the current card
+    // TODO: feels a little weird. Experiment with some control options, such as
+    // time between presses, different amounts of newlines.
+    // Could be used to restrict behaviour.
+    // TODO When in cue: TAB/ENTER moves to notes
+    // TODO Remove last line after double enter
+    var enterHandler = function() {
+        if (this.quill.getText().length > 1) {
+            var newCard = new Card(testSheet);
+            var editor = identifyEditor(this);
+            newCard[editor].focus();
+            return false;
+        }
+        return true;
+    };
+    var tabHandler = function() {
+        var editor = identifyEditor(this);
+        var nodeIndex = getNodeIndex(this.quill.container.parentNode);
+
+        if (editor === "cueEditor") {
+            cardsList[nodeIndex].notesEditor.focus();
+        }
+        else if (editor === "notesEditor") {
+            cardsList[nodeIndex].cueEditor.focus();
+        }
+    };
+
+    // TODO: set focus on another card
+    // TODO: check if other editor is empty
+    // TODO: pretty easy to delete things. Maybe make it more deliberate?
+    // TODO: don't delete if there is only one card.
+    var backspaceHandler = function() {
+        var card = getParentCard(this);
+        deleteCard(card);
+    };
+
+
+    var bindings = {
+        upArrow: {
+            key: 38,
+            handler: upArrowHandler
+        },
+        downArrow: {
+            key: 40,
+            handler: downArrowHandler
+        },
+        enter: {
+            key: "enter",
+            empty: true,
+            handler: enterHandler
+        },
+        tab: {
+            key: "tab",
+            handler: tabHandler
+        },
+        backspace: {
+            key: "backspace",
+            empty: true,
+            handler: backspaceHandler
+        }
+    };
+    var baseOptions = {
+        placeholder: "Write something...",
+        theme: "bubble",
+        modules: {
+            keyboard: {
+                bindings: bindings
+            }
+        }
     };
 
     // Simulated JSON from server. Should actually have deltas instead of strings
@@ -49,26 +210,10 @@ var hyperstudy = (function () {
         element.classList.add(type);
         return element;
     };
-
-    // Don't really need this
-    var updateProperty = function(editor, property, that) {
-        that[property] = editor.getContents();
-    };
-
 /*
 A word on the database/storage method:
 Store both the Delta (for editor/viewing usage) and the plaintext form (for revision usage).
 Not sure yet where the Delta wil be processed. Write a function for it anyway, since it'll be used somewhere.
-
-
-Card {
-    cueEditor:
-    cueDelta:
-    cueText:
-    notesEditor:
-    notesDelta:
-    notesText:
-}
 */
     var paramExists = function(parameter) {
         if (parameter !== undefined) {
@@ -77,7 +222,6 @@ Card {
             return false;
         }
     };
-
     var createCardNode = function() {
         var cardNode = document.createElement("section");
         cardNode.classList.add("card");
@@ -87,7 +231,6 @@ Card {
         cardNode.appendChild(notesNode);
         return {card: cardNode, cue: cueNode, notes: notesNode};
     };
-
     var toDelta = function(text) {
         var delta = new Delta();
         if (typeof text === 'string') {
@@ -100,47 +243,17 @@ Card {
         return delta;
     };
 
-    var Card = function(sheet, cueDelta, notesDelta) {
-        sheet.cards.push(this);
-        var thisCard = this;
+    // consider splitting into functions
+    // sheet argument isn't necessary
 
-        // Create a card DOM object
-        var node = createCardNode();
-        root.appendChild(node.card);
-
-        // create Quill editors for cue and notes
-        var cueEditor = new Quill(node.cue);
-        var notesEditor = new Quill(node.notes);
-
-        // Add references to editors.
-        this.cueEditor = cueEditor;
-        this.notesEditor = notesEditor;
-
-        // Are these necessary?
-        cueEditor.on("text-change", function() {
-            thisCard.cue = cueEditor.getContents();
-        });
-        notesEditor.on("text-change", function() {
-            thisCard.notes = notesEditor.getContents();
-        });
-
-        // Set editor contents
-        if (paramExists(cueDelta)) {
-            cueEditor.setContents(cueDelta);
-        }
-        if (paramExists(notesDelta)) {
-            notesEditor.setContents(notesDelta);
-        }
-    };
 
     var loadSheet = function(JSONresponse) {
         var sheet = JSON.parse(JSONresponse);
         // Create cards for every card in the sheet JSON
         for (var i = 0; i < sheet.cards.length; i++) {
-            // later, the toDelta() will not be needed as the JSON will contain Deltas.
+            // TODO later, the toDelta() will not be needed as the JSON will contain Deltas.
             new Card(testSheet, toDelta(sheet.cards[i].cue), toDelta(sheet.cards[i].notes));
         }
-
     };
     /*
         Tests
@@ -150,7 +263,7 @@ Card {
     var testDelta2 = toDelta(["Makes 2 assumptions:", "Atoms have fixed sizes", "Atoms are hard and not deformable"]);
 
     document.getElementById("cardAdder").addEventListener("click", function () {
-        new Card(testSheet, testDelta, testDelta2);
+        new Card(testSheet);
     });
     document.getElementById("accessTester").addEventListener("click", function () {
         console.log(testSheet);
@@ -161,7 +274,7 @@ Card {
     document.getElementById("test2").addEventListener("click", function () {
 
     });
-
+    new Card(testSheet);
 
 
     return {
@@ -173,5 +286,4 @@ Card {
 
 // Keyboard behaviour
 // When in cue: TAB/ENTER moves to notes
-// UP/DOWN change card
 // in notes: DOUBLE ENTER or ENTER on blank line creates new card

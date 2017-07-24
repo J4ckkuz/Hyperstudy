@@ -23,7 +23,11 @@ body {
 .card {
 	display: flex;
 	border: 1px solid black;
+	border-bottom: none;
 	min-height: 2em;
+}
+.card:last-of-type {
+	border-bottom: 1px solid black;
 }
 .cue {
 	width: 30%;
@@ -38,17 +42,17 @@ body {
 
 .ql-container {
 	height: auto; // Not required when using flexbox
+	font-size: 1em;
 }
 
 
 /*  Can't really decide how to style this. Perhaps let the user decide?
 	Let them pick a theme initially, then allow them to change it.
 	Classes allowed to be changed:
-	.note, .cue
+	.notes, .cue
 	attributes able to be changed:
 	background-color, color, font-family, font-size, border,
 	line-height (or margin after <p>), order of note and cue, whether or not
 	the lines connect (margin, i guess. Could be dangerous. Include a reset
 	style button.)
-	Mechanism to do this should be fairly straightforward.
 */
