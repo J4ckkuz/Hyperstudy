@@ -105,7 +105,7 @@ var hyperstudy = (function () {
     // TODO: feels a little weird. Experiment with some control options, such as
     // time between presses, different amounts of newlines.
     // Could be used to restrict behaviour.
-    // TODO When in cue: TAB/ENTER moves to notes
+    // TODO When in cue: ENTER moves to notes
     // TODO Remove last line after double enter
     var enterHandler = function() {
         if (this.quill.getText().length > 1) {
@@ -133,10 +133,12 @@ var hyperstudy = (function () {
     // TODO: pretty easy to delete things. Maybe make it more deliberate?
     // TODO: don't delete if there is only one card.
     var backspaceHandler = function() {
-        var card = getParentCard(this);
-        deleteCard(card);
+        if (this.quill.getText().length === 1) {
+            var card = getParentCard(this);
+            deleteCard(card);
+        }
+        return true;
     };
-
 
     var bindings = {
         upArrow: {
@@ -186,7 +188,6 @@ var hyperstudy = (function () {
                     "ATP powers metabolic activities",
                     "Enable cells to produce 15x more ATP"
                 ],
-                // A reference to the DOM object. This should be added by the client when cards are added, not included in the JSON or stored in the database.
             },{
                 cue: "What is a cell membrane?",
                 notes: [
@@ -275,6 +276,7 @@ Not sure yet where the Delta wil be processed. Write a function for it anyway, s
 
     });
     new Card(testSheet);
+
 
 
     return {
