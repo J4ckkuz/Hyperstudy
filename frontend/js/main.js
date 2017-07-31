@@ -16,6 +16,16 @@ var hyperstudy = (function () {
     };
     var cardsList = testSheet.cards;
 
+/*
+    Utility functions
+*/
+
+    // I'm not sure if this is just a waste of space tbh. Saves a couple of lines. worth it imo
+    var createAndClass = function(type) {
+        var element = document.createElement("div");
+        element.classList.add(type);
+        return element;
+    };
     var getNodeIndex = function(node) {
         for (var i = 0; i < cardsList.length; i++) {
             if (cardsList[i].node === node) {
@@ -37,13 +47,6 @@ var hyperstudy = (function () {
         }
     };
 
-    var paramExists = function(parameter) {
-        if (parameter !== undefined) {
-            return true;
-        } else {
-            return false;
-        }
-    };
     var createCardNode = function() {
         var cardNode = document.createElement("section");
         cardNode.classList.add("card");
@@ -53,6 +56,7 @@ var hyperstudy = (function () {
         cardNode.appendChild(notesNode);
         return {card: cardNode, cue: cueNode, notes: notesNode};
     };
+    // TODO: remove this after using for tests
     var toDelta = function(text) {
         var delta = new Delta();
         if (typeof text === 'string') {
@@ -64,76 +68,17 @@ var hyperstudy = (function () {
         }
         return delta;
     };
-
-    var Card = function(argsObject) {
-        cardsList.push(this);
-        var thisCard = this;
-
-        // TODO: Clean this up
-        if (argsObject !== undefined) {
-            var args = Object.assign({}, argsObject);
+    var bothEditorsEmpty = function(card) {
+        if (card.cueEditor.getText().length === 1 &&
+            card.notesEditor.getText().length === 1) {
+            return true;
         }
-        if (args === undefined) {
-            var args = {};
-        }
-        if (args.cue === undefined) {
-            args.cue = "";
-        }
-        if (args.notes === undefined) {
-            args.notes = "";
-        }
-
-        this.cue = new Delta(args.cue);
-        this.notes = new Delta(args.notes)
-
-        // Create a card DOM object
-        var node = createCardNode();
-        this.node = node.card;
-        root.appendChild(node.card);
-
-        // create Quill editors for cue and notes
-        var cueEditor = new Quill(node.cue, baseOptions);
-        var notesEditor = new Quill(node.notes, baseOptions);
-
-        // Populate editors
-        cueEditor.setContents(args.cue);
-        notesEditor.setContents(args.notes);
-
-        // Add references to editors.
-        this.cueEditor = cueEditor;
-        this.notesEditor = notesEditor;
-
-        // Are these necessary? Might be for auto-save
-        cueEditor.on("text-change", function() {
-            thisCard.cue = cueEditor.getContents();
-        });
-        notesEditor.on("text-change", function() {
-            thisCard.notes = notesEditor.getContents();
-        });
+        return false;
     };
 
-    var constructJSON = function(cardList) {
-        var newCardsList = [];
-        cardList.forEach(function(card, index, array) {
-            var newCard = {};
-            newCard.cueText = card.cueEditor.getText();
-            newCard.cueContents = card.cueEditor.getContents();
-            newCard.notesText = card.notesEditor.getText();
-            newCard.notesContents = card.notesEditor.getContents();
-            newCardsList.push(newCard);
-        });
-        var constructedJSON = JSON.stringify(newCardsList);
-        console.log(constructedJSON);
-        console.log(JSON.parse(constructedJSON));
-    };
-
-    var deleteCard = function(card) {
-        var index = cardsList.indexOf(card);
-        if (index > -1) {
-            cardsList.splice(index, 1);
-        }
-        root.removeChild(card.node);
-    };
+    /*
+        Keyboard handlers
+    */
     // TODO: make this focus on the bottom line of the editor above it.
     var moveUp = function(range, context) {
         if (range.index === 0) {
@@ -146,7 +91,7 @@ var hyperstudy = (function () {
         }
         return true;
     };
-    // TODO: same as above
+    // TODO: same as moveUp
     var moveDown = function(range, context) {
         var thisEditor = this.quill;
         if (thisEditor.getSelection().index === thisEditor.getText().length - 1) {
@@ -163,6 +108,7 @@ var hyperstudy = (function () {
     // TODO: feels a little weird. Experiment with some control options, such as
     // time between presses, different amounts of newlines.
     // Could be used to restrict behaviour.
+    // TODO: Separate functions to change focus
     // TODO When in cue: ENTER moves to notes
     // TODO Remove last line after double enter
     var switchEditors = function() {
@@ -176,7 +122,6 @@ var hyperstudy = (function () {
             cardsList[nodeIndex].cueEditor.focus();
         }
     };
-
     var enterHandler = function() {
         if (this.quill.getText().length > 1) {
             var newCard = new Card();
@@ -186,19 +131,14 @@ var hyperstudy = (function () {
         }
         return true;
     };
-
     // TODO: set focus on another card
-    // TODO: check if other editor is empty
-    // TODO: pretty easy to delete things. Maybe make it more deliberate?
-    // TODO: don't delete if there is only one card.
     var backspaceHandler = function() {
-        if (this.quill.getText().length === 1) {
-            var card = getParentCard(this);
+        var card = getParentCard(this);
+        if (bothEditorsEmpty(card) && cardsList.length > 1) {
             deleteCard(card);
         }
         return true;
     };
-
     var bindings = {
         upArrow: {
             key: 38,
@@ -233,46 +173,83 @@ var hyperstudy = (function () {
         }
     };
 
-    // Simulated JSON from server. Should actually have deltas instead of strings
-    var exampleSheet = {
-        name: "Biology 101",
-        date: Date.now(),
-        cards: [
-            {
-                cue: new Delta([{"insert":"Mitochondria"}]),
-                notes: new Delta([{"insert":"Mitochondria are rod-shaped organelles\nConvert O2, nutrients to ATP\nThis is called aerobic respiration\nATP powers metabolic activities\nEnable cells to produce 15x more ATP"}]),
-            },{
-                cue: new Delta([{"insert":"What is a cell membrane?"}]),
-                notes: new Delta([{"insert":"Thin, semi-permeable membrane\nSurrounds cytoplasm of cell\nProtects interior of cell\nAllows certain substances in, keeps others out"}])
-            }
-        ]
-    };
-    var exampleJSON = JSON.stringify(exampleSheet);
+    var Card = function(argsObject) {
+        cardsList.push(this);
+        var thisCard = this;
 
-    /*
-        Utility functions
-    */
+        // TODO: Clean this up
+        if (argsObject !== undefined) {
+            var args = Object.assign({}, argsObject);
+        } else {
+            var args = {};
+        }
+        if (args.cue === undefined) args.cue = "";
+        if (args.notes === undefined) args.notes = "";
 
-    // I'm not sure if this is just a waste of space tbh. Saves a couple of lines. worth it imo
-    var createAndClass = function(type) {
-        var element = document.createElement("div");
-        element.classList.add(type);
-        return element;
+        this.cue = new Delta(args.cue);
+        this.notes = new Delta(args.notes)
+
+        // Create a card DOM object
+        var node = createCardNode();
+        this.node = node.card;
+        root.appendChild(node.card);
+
+        // create Quill editors for cue and notes
+        var cueEditor = new Quill(node.cue, baseOptions);
+        var notesEditor = new Quill(node.notes, baseOptions);
+
+        // Populate editors
+        cueEditor.setContents(args.cue);
+        notesEditor.setContents(args.notes);
+
+        // Add references to editors.
+        this.cueEditor = cueEditor;
+        this.notesEditor = notesEditor;
+
+        // Are these necessary? Might be for auto-save
+        cueEditor.on("text-change", function() {
+            thisCard.cue = cueEditor.getContents();
+        });
+        notesEditor.on("text-change", function() {
+            thisCard.notes = notesEditor.getContents();
+        });
     };
+
+    var deleteCard = function(card) {
+        var index = cardsList.indexOf(card);
+        if (index > -1) {
+            cardsList.splice(index, 1);
+        }
+        root.removeChild(card.node);
+    };
+
 /*
 A word on the database/storage method:
 Store both the Delta (for editor/viewing usage) and the plaintext form (for revision usage).
-Not sure yet where the Delta wil be processed. Write a function for it anyway, since it'll be used somewhere.
 */
 
+    // This gets kinda slow with more than 64 cards. Probably not a problem.
     var loadSheet = function(JSONresponse) {
         var parsedSheet = JSON.parse(JSONresponse);
         // Create cards for every card in the sheet JSON
-        for (var i = 0; i < parsedSheet.cards.length; i++) {
-            new Card({cue: parsedSheet.cards[i].cue, notes: parsedSheet.cards[i].notes});
-        }
+        cardsList.forEach(function(card, index) {
+            new Card(card);
+        });
     };
 
+    var constructJSON = function(cardList) {
+        var newCardsList = [];
+        cardList.forEach(function(card, index, array) {
+            var newCard = {};
+            newCard.cueText = card.cueEditor.getText();
+            newCard.cueContents = card.cueEditor.getContents();
+            newCard.notesText = card.notesEditor.getText();
+            newCard.notesContents = card.notesEditor.getContents();
+            newCardsList.push(newCard);
+        });
+        var constructedJSON = JSON.stringify(newCardsList);
+        return constructedJSON;
+    };
     /*
         Tests
     */
@@ -283,10 +260,11 @@ Not sure yet where the Delta wil be processed. Write a function for it anyway, s
         console.log(testSheet);
     });
     document.getElementById("test1").addEventListener("click", function () {
-        loadSheet(exampleJSON);
+        var testJSON = constructJSON(cardsList);
+        loadSheet(testJSON);
     });
     document.getElementById("test2").addEventListener("click", function () {
-        constructJSON(cardsList);
+
     });
 
     new Card({
