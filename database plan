@@ -1,0 +1,32 @@
+========
+Database
+========
+
+For note pages, editors:
+    Store deltas (quill.getContents())
+    cue: JSON
+    notes: JSON
+For revision:
+    Store plaintext (quill.getText())
+    cue: string
+    notes: string
+
+Tables:
+    Sheets
+        name
+        date
+        subject
+    Cards
+        These Cue fields could be on a different table - probably "more correct"
+        but no need to do this.
+        cue_delta
+        cue_text
+        attempts
+        attempts_correct
+        next_revision_date?
+        lines: many Lines
+    Lines
+        delta
+        text
+        attempts
+        attempts_correct

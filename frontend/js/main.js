@@ -65,51 +65,25 @@ var hyperstudy = (function () {
         return delta;
     };
 
-    var splitTest = new Delta([{"insert":"My "},{"attributes":{"bold":true},"insert":"name"},{"insert":" is\nChanning "},{"attributes":{"italic":true},"insert":"Tatum"},{"insert":"\n"},{"attributes":{"bold":true},"insert":"Not"},{"insert":"\n"},{"attributes":{"bold":true},"insert":"Jeff"},{"insert":"\n"}]);
-    var splitTest2 = new Delta([{"insert": "My name\nis\nChanning Tatum"}]);
-
-    var splitDelta = function(delta) {
-        // maybe this shouldnt be a delta?
-        var newDelta = new Delta();
-        var newlineSplitResult = "\n".split("\n");
-
-        var arrayOfSplitArrays = [];
-        var result = [];
-        // Loop through operations
-        delta.ops.forEach(function(operation) {
-            // Split insert text on newline
-            var splitArray = operation.insert.split("\n");
-            var newObj = {};
-
-            // newObj.insert =
-            if (operation.attributes) {
-
-            }
-            arrayOfSplitArrays.push(splitArray);
-            console.log(splitArray);
-
-            var objToInsert = {};
-
-
-        });
-        console.log(arrayOfSplitArrays);
-        console.log(newDelta);
-    };
-
-// Doubt this'll work
-    var unsplitDelta = function(deltaArray) {
-        return deltaArray.join(',{insert: "\n"},');
-    };
-
-    // splitDelta(splitTest);
-
-// TODO: make this work with deltas
     var Card = function(args) {
         cardsList.push(this);
         var thisCard = this;
+        console.log(this);
+
+        // Something about this is broken
+        console.log(args);
+        if (args === undefined) {
+            var args = {};
+        }
+        if (args.cue === undefined) {
+            args.cue = "";
+        }
+        if (args.notes === undefined) {
+            args.notes = "";
+        }
 
         this.cue = new Delta(args.cue);
-        this.notes = new Delta(args.notes);
+        this.notes = new Delta(args.notes)
 
         // Create a card DOM object
         var node = createCardNode();
@@ -135,6 +109,19 @@ var hyperstudy = (function () {
         notesEditor.on("text-change", function() {
             thisCard.notes = notesEditor.getContents();
         });
+    };
+
+    var constructJSON = function(cardList) {
+        var newCardsList = [];
+        cardList.forEach(function(card, index, array) {
+            var newCard = {};
+            newCard.cueText = card.cueEditor.getText();
+            newCard.cueContents = card.cueEditor.getContents();
+            newCard.notesText = card.notesEditor.getText();
+            newcard.notesContents = card.notesEditor.getContents();
+            newCardsList.push(newCard);
+        });
+        console.log(newCardsList);
     };
 
     var deleteCard = function(card) {
@@ -296,10 +283,7 @@ Not sure yet where the Delta wil be processed. Write a function for it anyway, s
         loadSheet(exampleJSON);
     });
     document.getElementById("test2").addEventListener("click", function () {
-        cardsList.forEach(function(currentValue) {
-            console.log(JSON.stringify(currentValue.cue));
-            console.log(JSON.stringify(currentValue.notes));
-        });
+        constructJSON(cardsList);
     });
 
     new Card({
