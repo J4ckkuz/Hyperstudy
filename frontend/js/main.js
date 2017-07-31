@@ -65,13 +65,14 @@ var hyperstudy = (function () {
         return delta;
     };
 
-    var Card = function(args) {
+    var Card = function(argsObject) {
         cardsList.push(this);
         var thisCard = this;
-        console.log(this);
 
-        // Something about this is broken
-        console.log(args);
+        // TODO: Clean this up
+        if (argsObject !== undefined) {
+            var args = Object.assign({}, argsObject);
+        }
         if (args === undefined) {
             var args = {};
         }
@@ -118,10 +119,12 @@ var hyperstudy = (function () {
             newCard.cueText = card.cueEditor.getText();
             newCard.cueContents = card.cueEditor.getContents();
             newCard.notesText = card.notesEditor.getText();
-            newcard.notesContents = card.notesEditor.getContents();
+            newCard.notesContents = card.notesEditor.getContents();
             newCardsList.push(newCard);
         });
-        console.log(newCardsList);
+        var constructedJSON = JSON.stringify(newCardsList);
+        console.log(constructedJSON);
+        console.log(JSON.parse(constructedJSON));
     };
 
     var deleteCard = function(card) {
@@ -287,8 +290,8 @@ Not sure yet where the Delta wil be processed. Write a function for it anyway, s
     });
 
     new Card({
-        cue: new Delta([{insert: "test", attributes: {"bold": true}}]),
-        notes: new Delta([{insert: "test1\ntest2\ntest3"}])
+        cue: [{insert: "test", attributes: {"bold": true}}],
+        notes: [{insert: "test1\ntest2\ntest3"}]
     });
 
     return {
