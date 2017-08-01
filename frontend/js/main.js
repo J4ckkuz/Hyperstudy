@@ -121,7 +121,7 @@ var hyperstudy = (function () {
     // not the handler)
     var enterHandler = function() {
         if (this.quill.getText().length > 1) {
-            var newCard = new Card();
+            var newCard = new Card({insertionPoint: getParentCard(this).node});
             var editor = identifyEditor(this);
             newCard[editor].focus();
             return false;
@@ -171,7 +171,6 @@ var hyperstudy = (function () {
             }
         }
     };
-
     var setUndefinedArguments = function(argsIn, defaults) {
         // Copy the arguments -- changing an argument has worse performance.
         var args = Object.assign({}, argsIn);
@@ -182,38 +181,45 @@ var hyperstudy = (function () {
         }
         return args;
     };
-
+    var insertAfter = function(newNode, referenceNode) {
+        referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    };
     /* Card constructor */
 
     var defaultOptions = {
-        cue: "",
-        notes: "",
-        insertionPoint: root
+        cue: undefined,
+        notes: undefined,
+        insertionPoint: undefined
     };
     var Card = function(argumentsObject) {
-        cardsList.push(this);
+        var options;
         var thisCard = this;
+        cardsList.push(this);
 
-        // TODO: Clean this up
-        if (argumentsObject !== undefined) {
-            var options = setUndefinedArguments(argumentsObject, defaultOptions);
-        }
-
-        this.cue = new Delta(options.cue);
-        this.notes = new Delta(options.notes)
-
+        options = setUndefinedArguments(argumentsObject, defaultOptions);
+        console.log(options);
         // Create a card DOM object
         var node = createCardNode();
         this.node = node.card;
-        root.appendChild(node.card);
+
+        // Add after the current card
+
+        if (options.insertionPoint) {
+            insertAfter(this.node, options.insertionPoint);
+        } else {
+            root.appendChild(node.card);
+        }
 
         // create Quill editors for cue and notes
         var cueEditor = new Quill(node.cue, baseOptions);
         var notesEditor = new Quill(node.notes, baseOptions);
 
+        this.cue = new Delta(options.cue);
+        this.notes = new Delta(options.notes);
+
         // Populate editors
-        cueEditor.setContents(args.cue);
-        notesEditor.setContents(args.notes);
+        cueEditor.setContents(this.cue);
+        notesEditor.setContents(this.notes);
 
         // Add references to editors.
         this.cueEditor = cueEditor;
@@ -280,8 +286,10 @@ Store both the Delta (for editor/viewing usage) and the plaintext form (for revi
     });
 
     new Card({
-        cue: [{insert: "test", attributes: {"bold": true}}],
-        notes: [{insert: "test1\ntest2\ntest3"}]
+        // cue: [{insert: "test", attributes: {"bold": true}}],
+        cue: undefined,
+        // notes: [{insert: "test1\ntest2\ntest3"}]
+        notes: undefined
     });
 
     return {
