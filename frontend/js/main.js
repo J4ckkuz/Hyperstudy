@@ -10,7 +10,6 @@ var hyperstudy = (function () {
         Basic variables
     */
     var root = document.getElementById("sheet");
-
     var testSheet = {
         cards: []
     };
@@ -20,12 +19,6 @@ var hyperstudy = (function () {
     Utility functions
 */
 
-    // I'm not sure if this is just a waste of space tbh. Saves a couple of lines. worth it imo
-    var createAndClass = function(type) {
-        var element = document.createElement("div");
-        element.classList.add(type);
-        return element;
-    };
     var getNodeIndex = function(node) {
         for (var i = 0; i < cardsList.length; i++) {
             if (cardsList[i].node === node) {
@@ -46,12 +39,13 @@ var hyperstudy = (function () {
             return "notesEditor";
         }
     };
-
     var createCardNode = function() {
         var cardNode = document.createElement("section");
         cardNode.classList.add("card");
-        var cueNode = createAndClass("cue");
-        var notesNode = createAndClass("notes");
+        var cueNode = document.createElement("div");
+        cueNode.classList.add("cue");
+        var notesNode = document.createElement("div");
+        notesNode.classList.add("notes");
         cardNode.appendChild(cueNode);
         cardNode.appendChild(notesNode);
         return {card: cardNode, cue: cueNode, notes: notesNode};
@@ -79,38 +73,35 @@ var hyperstudy = (function () {
     /*
         Keyboard handlers
     */
-    // TODO: make this focus on the bottom line of the editor above it.
+    var focusCard = function(which, that) {
+        var nodeIndex = getNodeIndex(that.quill.container.parentNode);
+        var editor = identifyEditor(that);
+        if (which === "previous" && nodeIndex > 0) {
+            cardsList[nodeIndex - 1][editor].focus();
+        } else if (which === "next" && nodeIndex < cardsList.length - 1) {
+            cardsList[nodeIndex + 1][editor].focus();
+        }
+    };
     var moveUp = function(range, context) {
         if (range.index === 0) {
-            var nodeIndex = getNodeIndex(this.quill.container.parentNode);
-
-            if (nodeIndex > 0) {
-                var editor = identifyEditor(this);
-                cardsList[nodeIndex - 1][editor].focus();
-            }
+            focusCard("previous", this);
+            return false;
         }
         return true;
     };
-    // TODO: same as moveUp
     var moveDown = function(range, context) {
         var thisEditor = this.quill;
+        // If on the last character
         if (thisEditor.getSelection().index === thisEditor.getText().length - 1) {
-            var nodeIndex = getNodeIndex(this.quill.container.parentNode);
-
-            if (nodeIndex < cardsList.length - 1) {
-                var editor = identifyEditor(this);
-                cardsList[nodeIndex + 1][editor].focus();
-            }
+            focusCard("next", this);
+            return false;
         }
         return true;
     };
-    // TODO: make this insert after the current card
-    // TODO: feels a little weird. Experiment with some control options, such as
-    // time between presses, different amounts of newlines.
-    // Could be used to restrict behaviour.
-    // TODO: Separate functions to change focus
-    // TODO When in cue: ENTER moves to notes
-    // TODO Remove last line after double enter
+
+    // TODO: Make sure the selection is of the last character.
+    // To improve performance (maybe) this functionality could be moved into
+    // configuration
     var switchEditors = function() {
         var editor = identifyEditor(this);
         var nodeIndex = getNodeIndex(this.quill.container.parentNode);
@@ -122,6 +113,12 @@ var hyperstudy = (function () {
             cardsList[nodeIndex].cueEditor.focus();
         }
     };
+    // TODO: make this insert after the current card
+    // TODO: feels a little weird. Experiment with some control options, such as
+    // time between presses, different amounts of newlines.
+    // Could be used to restrict behaviour.
+    // TODO When in cue: ENTER moves to notes (do in configurations for editors,
+    // not the handler)
     var enterHandler = function() {
         if (this.quill.getText().length > 1) {
             var newCard = new Card();
@@ -131,11 +128,13 @@ var hyperstudy = (function () {
         }
         return true;
     };
-    // TODO: set focus on another card
     var backspaceHandler = function() {
         var card = getParentCard(this);
         if (bothEditorsEmpty(card) && cardsList.length > 1) {
+            focusCard("previous", this);
             deleteCard(card);
+
+            return false;
         }
         return true;
     };
@@ -173,21 +172,35 @@ var hyperstudy = (function () {
         }
     };
 
-    var Card = function(argsObject) {
+    var setUndefinedArguments = function(argsIn, defaults) {
+        // Copy the arguments -- changing an argument has worse performance.
+        var args = Object.assign({}, argsIn);
+        for (var property in defaults) {
+            if (args[property] === undefined) {
+                args[property] = defaults[property];
+            }
+        }
+        return args;
+    };
+
+    /* Card constructor */
+
+    var defaultOptions = {
+        cue: "",
+        notes: "",
+        insertionPoint: root
+    };
+    var Card = function(argumentsObject) {
         cardsList.push(this);
         var thisCard = this;
 
         // TODO: Clean this up
-        if (argsObject !== undefined) {
-            var args = Object.assign({}, argsObject);
-        } else {
-            var args = {};
+        if (argumentsObject !== undefined) {
+            var options = setUndefinedArguments(argumentsObject, defaultOptions);
         }
-        if (args.cue === undefined) args.cue = "";
-        if (args.notes === undefined) args.notes = "";
 
-        this.cue = new Delta(args.cue);
-        this.notes = new Delta(args.notes)
+        this.cue = new Delta(options.cue);
+        this.notes = new Delta(options.notes)
 
         // Create a card DOM object
         var node = createCardNode();
@@ -206,7 +219,7 @@ var hyperstudy = (function () {
         this.cueEditor = cueEditor;
         this.notesEditor = notesEditor;
 
-        // Are these necessary? Might be for auto-save
+        // Are these necessary? calling constructJSON on a change might be better.
         cueEditor.on("text-change", function() {
             thisCard.cue = cueEditor.getContents();
         });
@@ -228,11 +241,11 @@ A word on the database/storage method:
 Store both the Delta (for editor/viewing usage) and the plaintext form (for revision usage).
 */
 
-    // This gets kinda slow with more than 64 cards. Probably not a problem.
+    // This gets kinda slow with more than 64 cards. Probably not a problem, but improving performance would be nice.
     var loadSheet = function(JSONresponse) {
         var parsedSheet = JSON.parse(JSONresponse);
         // Create cards for every card in the sheet JSON
-        cardsList.forEach(function(card, index) {
+        cardsList.forEach(function(card) {
             new Card(card);
         });
     };
@@ -247,8 +260,7 @@ Store both the Delta (for editor/viewing usage) and the plaintext form (for revi
             newCard.notesContents = card.notesEditor.getContents();
             newCardsList.push(newCard);
         });
-        var constructedJSON = JSON.stringify(newCardsList);
-        return constructedJSON;
+        return(JSON.stringify(newCardsList));
     };
     /*
         Tests
@@ -278,7 +290,3 @@ Store both the Delta (for editor/viewing usage) and the plaintext form (for revi
         // };
     };
 })();
-
-// Keyboard behaviour
-// When in cue: TAB/ENTER moves to notes
-// in notes: DOUBLE ENTER or ENTER on blank line creates new card
