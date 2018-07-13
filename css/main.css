@@ -1,0 +1,144 @@
+/* Written with this:
+http://jaydenseric.com/blog/forget-normalize-or-resets-lay-your-own-css-foundation
+
+TODO:
+	✔ make cue and notes areas fit on the same line
+	✔ put a border between them
+	✔ Fix bottom border
+	✔ Fix side border
+*/
+html {
+	-ms-text-size-adjust: 100%;
+	-moz-text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
+	box-sizing: border-box;
+}
+*, *:before, *:after {
+	box-sizing: inherit;
+}
+body {
+	margin: 0;
+	line-height: 1;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-font-smoothing: antialiased;
+	/* test with subpixel-antialised */
+}
+p, h1, h2, h3, h4, h5, h6, blockquote, ol, ul, figure {
+	margin: 0;
+	padding: 0;
+}
+main, li {
+	display: block;
+}
+h1, h2, h3, h4, h5, h6 {
+	font-size: inherit;
+}
+strong {
+	font-weight: bold;
+}
+a, button {
+	transition: .3s;
+}
+a {
+	text-decoration: none;
+}
+button {
+	overflow: visible;
+	border: 0;
+	-webkit-font-smoothing: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	background: none;
+	cursor: pointer;
+}
+::-moz-focus-inner {
+	padding: 0;
+	border: 0;
+}
+img {
+	max-width: 100%;
+	height: auto;
+	border: 0;
+}
+html, body {
+	height: 100%;
+	position: relative;
+}
+html {
+	font-size: 62.5%;
+}
+/* Merge the html/body selectors? */
+
+/* Styles */
+
+body {
+	font-family: Helvetica, Arial, sans-serif;
+	line-height: 1.42;
+	/*background: #72b2ff;*/
+	/*background: #0BB5FF;*/
+	/*background: #97ccf1;*/
+	/*background: #afeef5;*/
+	/*font-size: 1.6em;*/
+}
+#card-container {
+	/*Needs some tuning.*/
+	font-size: 2.4em;
+	max-width: 45em;
+	margin: 0 auto;
+	margin-top: 2em;
+	/*box-shadow: rgba(0, 0, 0, 0.30) 0px 3px 15px;*/
+}
+
+.card {
+	/*consider making these into flashcards*/
+	margin-bottom: 1em;
+	/*border-bottom: 1px solid #97ccf1;*/
+	box-shadow: rgba(0, 0, 0, 0.30) 0px 3px 15px;
+	display: flex;
+	background: #fff;
+
+}
+
+.card:first-of-type {
+	border-radius: 3px 3px 0 0;
+}
+.card:last-of-type {
+	/*border-bottom: 1px solid rgba(0, 0, 0, 0.16);*/
+	border-bottom: 0;
+	border-radius: 0 0 3px 3px;
+}
+.cue {
+	border-right: 1px solid #97ccf1;
+	width: 33%;
+	height: 100%;
+	/*flex: 1 0 auto;*/
+
+}
+.notes {
+	width: 67%;
+
+}
+
+.ql-container {
+	height: auto;
+}
+
+.ql-editor {
+	/*font-size: 2.2em;*/
+	padding: 0.75em 1em;
+}
+.depth-1 {
+	box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 6px;
+}
+.depth-2 {
+	box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 10px;
+}
+.depth-3 {
+	box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 30px;
+}
+.depth-4 {
+	box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 45px;
+}
+.depth-5 {
+	box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 60px;
+}
